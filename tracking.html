@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="description" content="Tracking Delivery Order bahan ajar SITTA UT — buat DO baru dan lacak status pengiriman dengan Vue.js." />
+  <title>Tracking DO - SITTA UT (Vue.js)</title>
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body data-page="tracking">
+  <a href="#main-content" class="sr-only">Lewati ke konten utama</a>
+
+  <div id="app" class="app-shell">
+    <!-- Sidebar -->
+    <aside :class="['sidebar', { open: sidebarOpen }]" id="sidebar" aria-label="Navigasi utama">
+      <div class="sidebar-brand">
+        <img src="assets/logo-ut.png" alt="" width="32" height="32"
+             onerror="this.style.display='none'" />
+        <div class="sidebar-brand-text">
+          SITTA <small>Universitas Terbuka</small>
+        </div>
+      </div>
+      <ul class="sidebar-nav">
+        <li><a href="index.html" data-page="index" @click="closeSidebar">
+          <span class="nav-icon" aria-hidden="true">🏠</span>
+          <span>Beranda</span>
+        </a></li>
+        <li><a href="stok.html" data-page="stok" @click="closeSidebar">
+          <span class="nav-icon" aria-hidden="true">📚</span>
+          <span>Stok Bahan Ajar</span>
+        </a></li>
+        <li><a href="tracking.html" data-page="tracking" @click="closeSidebar">
+          <span class="nav-icon" aria-hidden="true">🚚</span>
+          <span>Tracking DO</span>
+        </a></li>
+      </ul>
+    </aside>
+    <div v-if="sidebarOpen" class="sidebar-backdrop" @click="closeSidebar"></div>
+
+    <!-- Topbar -->
+    <header class="topbar">
+      <button type="button" class="hamburger-btn" @click="toggleSidebar"
+              :aria-expanded="sidebarOpen" aria-controls="sidebar"
+              :aria-label="sidebarOpen ? 'Tutup menu' : 'Buka menu'">
+        <span aria-hidden="true">☰</span>
+      </button>
+      <div class="topbar-brand">
+        <img src="assets/logo-ut.png" alt="" width="36" height="36"
+             onerror="this.style.display='none'" />
+        <span>SITTA</span>
+      </div>
+      <div class="topbar-spacer"></div>
+      <div class="topbar-greeting" aria-live="polite">{{ greeting }}</div>
+    </header>
+
+    <!-- Main -->
+    <main class="main-content" id="main-content">
+      <header class="page-header">
+        <div>
+          <h1 class="page-title">Tracking Delivery Order</h1>
+          <p class="page-subtitle">Buat DO baru dan lacak status pengiriman bahan ajar</p>
+        </div>
+      </header>
+
+      <!-- Form Input DO Baru -->
+      <section class="card" aria-labelledby="form-do-title">
+        <h2 id="form-do-title" class="card-title">Buat DO Baru</h2>
+        <p class="card-subtitle">Submit DO akan otomatis mengurangi qty stok di UPBJJ asal yang dipilih</p>
+
+        <form @submit.prevent="submitDO" novalidate class="form-do">
+          <!-- Nomor DO (read-only auto-generated) -->
+          <div class="form-group">
+            <label class="form-label" for="do-nomor">Nomor DO (auto-generated)</label>
+            <input type="text" id="do-nomor" class="form-input readonly"
+                   :value="nextDoNumber" readonly aria-readonly="true" />
+            <span class="form-hint">Format: DO{tahun}-{seq 3-digit}, reset per tahun</span>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label" for="do-nim">
+                NIM <span class="required">*</span>
+              </label>
+              <input type="text" id="do-nim" class="form-input"
+                     v-model="formDO.nim" @blur="validateFieldDO('nim')"
+                     placeholder="041234567" maxlength="9"
+                     aria-required="true" autocomplete="off" />
+              <span v-if="formDOtouched.nim && formDOerrors.nim" class="form-error" role="alert">
+                {{ formDOerrors.nim }}
+              </span>
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="do-nama">
+                Nama Lengkap <span class="required">*</span>
+              </label>
+              <input type="text" id="do-nama" class="form-input"
+                     v-model="formDO.nama" @blur="validateFieldDO('nama')"
+                     placeholder="Nama mahasiswa" aria-required="true" />
+              <span v-if="formDOtouched.nama && formDOerrors.nama" class="form-error" role="alert">
+                {{ formDOerrors.nama }}
+              </span>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label" for="do-ekspedisi">
+                Ekspedisi <span class="required">*</span>
+              </label>
+              <select id="do-ekspedisi" class="form-select"
+                      v-model="formDO.ekspedisi" @blur="validateFieldDO('ekspedisi')"
+                      aria-required="true">
+                <option value="">-- Pilih ekspedisi --</option>
+                <option v-for="e in seedPengirimanList" :key="e.kode" :value="e.kode">
+                  {{ e.kode }} — {{ e.nama }}
+                </option>
+              </select>
+              <span v-if="formDOtouched.ekspedisi && formDOerrors.ekspedisi" class="form-error" role="alert">
+                {{ formDOerrors.ekspedisi }}
+              </span>
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="do-upbjjAsal">
+                UPBJJ Asal <span class="required">*</span>
+              </label>
+              <select id="do-upbjjAsal" class="form-select"
+                      v-model="formDO.upbjjAsal" @blur="validateFieldDO('upbjjAsal')"
+                      aria-required="true">
+                <option value="">-- Pilih UPBJJ asal --</option>
+                <option v-for="u in seedUpbjjList" :key="u" :value="u">{{ u }}</option>
+              </select>
+              <span v-if="formDOtouched.upbjjAsal && formDOerrors.upbjjAsal" class="form-error" role="alert">
+                {{ formDOerrors.upbjjAsal }}
+              </span>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="do-paket">
+              Paket Bahan Ajar <span class="required">*</span>
+            </label>
+            <select id="do-paket" class="form-select"
+                    v-model="formDO.kodePaket" @blur="validateFieldDO('kodePaket')"
+                    aria-required="true">
+              <option value="">-- Pilih paket --</option>
+              <option v-for="p in seedPaket" :key="p.kode" :value="p.kode">
+                {{ p.kode }} — {{ p.nama }}
+              </option>
+            </select>
+            <span v-if="formDOtouched.kodePaket && formDOerrors.kodePaket" class="form-error" role="alert">
+              {{ formDOerrors.kodePaket }}
+            </span>
+
+            <!-- Detail isi paket (muncul setelah pilih paket + UPBJJ asal) -->
+            <div v-if="selectedPaket && formDO.upbjjAsal" class="paket-detail">
+              <h4>Isi Paket "{{ selectedPaket.nama }}":</h4>
+              <ul class="paket-isi-list">
+                <li v-for="d in selectedPaketDetail" :key="d.kode"
+                    :class="{ 'item-unavailable': !d.cukup }">
+                  <code>{{ d.kode }}</code> — {{ d.judul }}
+                  <span v-if="d.cukup" class="qty-ok">
+                    ✅ {{ d.qtyTersedia }} tersedia di {{ formDO.upbjjAsal }}
+                  </span>
+                  <span v-else class="qty-fail">
+                    ⛔ Tidak tersedia di {{ formDO.upbjjAsal }}
+                    <small v-if="findStokDiUpbjjLain(d.kode)" class="text-muted">
+                      (tersedia di: {{ findStokDiUpbjjLain(d.kode) }})
+                    </small>
+                  </span>
+                </li>
+              </ul>
+              <div v-if="stokTidakTersedia.length > 0" class="alert alert-error">
+                ⚠️ {{ stokTidakTersedia.length }} item tidak tersedia di UPBJJ {{ formDO.upbjjAsal }}.
+                Pilih UPBJJ asal lain atau ubah paket.
+              </div>
+            </div>
+            <div v-else-if="selectedPaket" class="paket-detail">
+              <p class="text-muted"><small>💡 Pilih UPBJJ asal untuk melihat ketersediaan stok.</small></p>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label" for="do-tanggal">
+                Tanggal Kirim <span class="required">*</span>
+              </label>
+              <input type="date" id="do-tanggal" class="form-input"
+                     v-model="formDO.tanggalKirim" :min="todayLocal()"
+                     @blur="validateFieldDO('tanggalKirim')"
+                     aria-required="true" />
+              <span v-if="formDOtouched.tanggalKirim && formDOerrors.tanggalKirim" class="form-error" role="alert">
+                {{ formDOerrors.tanggalKirim }}
+              </span>
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="do-total">Total Harga (auto)</label>
+              <input type="text" id="do-total" class="form-input readonly"
+                     :value="formatRupiah(totalDO)" readonly aria-readonly="true" />
+              <span class="form-hint">Auto-fill dari paket terpilih</span>
+            </div>
+          </div>
+
+          <div class="form-actions">
+            <button type="button" @click="resetFormDO" class="btn btn-secondary">
+              Reset Form
+            </button>
+            <button type="submit" :disabled="!canSubmitDO" class="btn btn-primary">
+              📦 Buat DO
+            </button>
+          </div>
+        </form>
+      </section>
+
+      <!-- Histori DO -->
+      <section class="card" aria-labelledby="histori-title">
+        <h2 id="histori-title" class="card-title">Histori Delivery Order</h2>
+        <p class="card-subtitle">Klik baris untuk melihat timeline pengiriman</p>
+
+        <div class="histori-toolbar">
+          <input type="search" class="form-input"
+                 v-model="searchDoQuery"
+                 placeholder="🔍 Cari nomor DO atau NIM..."
+                 aria-label="Cari DO" />
+          <button type="button" @click="resetTrackingData" class="btn btn-secondary btn-sm"
+                  title="Kembalikan tracking ke kondisi awal">↻ Reset Tracking</button>
+        </div>
+
+        <div v-if="filteredTracking.length === 0" class="empty-state" role="status">
+          <div class="empty-state-icon" aria-hidden="true">📭</div>
+          <h3 class="empty-state-title">Tidak ada DO yang cocok</h3>
+          <p class="empty-state-message">Coba ubah pencarian atau buat DO baru di atas.</p>
+        </div>
+
+        <div v-else class="table-wrapper">
+          <div class="table-scroll">
+            <table class="data-table">
+              <caption class="sr-only">Daftar Delivery Order</caption>
+              <thead>
+                <tr>
+                  <th scope="col">Nomor DO</th>
+                  <th scope="col">NIM</th>
+                  <th scope="col">Nama</th>
+                  <th scope="col">UPBJJ</th>
+                  <th scope="col">Tanggal</th>
+                  <th scope="col">Status</th>
+                  <th scope="col" class="text-right">Total</th>
+                  <th scope="col" aria-label="Aksi">Aksi</th>
+                </tr>
+              </thead>
+              <tbody>
+                <template v-for="d in filteredTracking" :key="d.nomor">
+                  <tr @click="toggleExpandDo(d.nomor)" class="clickable-row"
+                      :aria-expanded="expandedDo === d.nomor">
+                    <td><code>{{ d.nomor }}</code></td>
+                    <td>{{ d.nim }}</td>
+                    <td>{{ d.nama }}</td>
+                    <td>{{ d.upbjjAsal }}</td>
+                    <td>{{ formatTanggal(d.tanggalKirim) }}</td>
+                    <td>
+                      <span :class="['badge', 'badge-' + slugStatus(d.status)]">
+                        {{ d.status }}
+                      </span>
+                    </td>
+                    <td class="text-right">{{ formatRupiah(d.total) }}</td>
+                    <td class="aksi-cell">
+                      <button type="button" @click.stop="openUpdateStatus(d.nomor)"
+                              :disabled="availableStatuses(d.status).length === 0"
+                              class="btn btn-ghost btn-sm"
+                              :title="availableStatuses(d.status).length === 0 ? 'Status final' : 'Update status'">
+                        🔄
+                      </button>
+                    </td>
+                  </tr>
+                  <tr v-if="expandedDo === d.nomor" class="timeline-row">
+                    <td colspan="8">
+                      <div class="timeline-wrapper">
+                        <h4>Timeline Pengiriman</h4>
+                        <ol class="timeline">
+                          <li v-for="(p, i) in d.perjalanan" :key="i">
+                            <div class="timeline-time">
+                              {{ formatWaktu(p.waktu) }}
+                              <span v-if="iconForKeterangan(p.keterangan)" class="timeline-icon" aria-hidden="true">
+                                {{ iconForKeterangan(p.keterangan) }}
+                              </span>
+                            </div>
+                            <div class="timeline-text">{{ p.keterangan }}</div>
+                          </li>
+                        </ol>
+                      </div>
+                    </td>
+                  </tr>
+                </template>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="app-footer">
+      &copy; 2026 Universitas Terbuka — SITTA v2.0 Vue.js Edition
+    </footer>
+
+    <!-- Modal Update Status -->
+    <transition name="modal">
+      <div v-if="modalUpdateStatus.open" class="modal-backdrop" role="dialog"
+           aria-modal="true" aria-labelledby="modal-update-title"
+           @click.self="modalUpdateStatus.open = false">
+        <div class="modal-content">
+          <button type="button" class="modal-close-btn"
+                  @click="modalUpdateStatus.open = false"
+                  aria-label="Tutup modal">&times;</button>
+          <h2 id="modal-update-title" class="modal-title">
+            Update Status DO {{ modalUpdateStatus.nomor }}
+          </h2>
+
+          <p>
+            <strong>Status saat ini:</strong>
+            <span :class="['badge', 'badge-' + slugStatus(tracking[modalUpdateStatus.nomor].status)]">
+              {{ tracking[modalUpdateStatus.nomor].status }}
+            </span>
+          </p>
+
+          <form @submit.prevent="submitUpdateStatus" novalidate>
+            <div class="form-group">
+              <label class="form-label" for="status-baru">
+                Status Baru <span class="required">*</span>
+              </label>
+              <select id="status-baru" class="form-select"
+                      v-model="modalUpdateStatus.statusBaru"
+                      aria-required="true">
+                <option value="">-- Pilih status baru --</option>
+                <option v-for="s in availableStatuses(tracking[modalUpdateStatus.nomor].status)"
+                        :key="s" :value="s">{{ s }}</option>
+              </select>
+            </div>
+
+            <div v-if="modalUpdateStatus.statusBaru" class="suggestion-chip">
+              💡 Saran keterangan:
+              <button type="button" class="chip" @click="applySuggestion">
+                "{{ suggestionForStatus(modalUpdateStatus.statusBaru) }}"
+              </button>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="keterangan">
+                Keterangan <span class="required">*</span>
+              </label>
+              <textarea id="keterangan" class="form-input"
+                        v-model="modalUpdateStatus.keterangan"
+                        rows="3" maxlength="200"
+                        placeholder="Masukkan keterangan update (min 5, max 200 karakter)"
+                        aria-required="true"></textarea>
+              <span class="form-hint">
+                {{ modalUpdateStatus.keterangan.length }} / 200 karakter
+              </span>
+            </div>
+
+            <span v-if="modalUpdateStatus.error" class="form-error" role="alert">
+              {{ modalUpdateStatus.error }}
+            </span>
+
+            <div class="modal-actions">
+              <button type="button" @click="modalUpdateStatus.open = false"
+                      class="btn btn-secondary">Batal</button>
+              <button type="submit" class="btn btn-primary">Update Status</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </transition>
+
+    <!-- Toast -->
+    <transition name="toast">
+      <div v-if="toast.visible" :class="['toast', 'toast-' + toast.type]"
+           role="status" aria-live="polite">
+        <span class="toast-icon" aria-hidden="true">
+          {{ toast.type === 'success' ? '✅' : toast.type === 'error' ? '⛔' : 'ℹ️' }}
+        </span>
+        <span class="toast-message">{{ toast.message }}</span>
+      </div>
+    </transition>
+  </div>
+
+  <!-- Scripts -->
+  <script src="https://unpkg.com/vue@3.5.34/dist/vue.global.prod.js"></script>
+  <script src="js/dataBahanAjar.js"></script>
+  <script src="js/shared.js"></script>
+  <script src="js/tracking-app.js"></script>
+</body>
+</html>
