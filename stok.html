@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="description" content="Kelola stok bahan ajar SITTA UT — filter, sort, tambah, edit, hapus dengan Vue.js." />
+  <title>Stok Bahan Ajar - SITTA UT (Vue.js)</title>
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body data-page="stok">
+  <a href="#main-content" class="sr-only">Lewati ke konten utama</a>
+
+  <div id="app" class="app-shell">
+    <!-- Sidebar -->
+    <aside :class="['sidebar', { open: sidebarOpen }]" id="sidebar" aria-label="Navigasi utama">
+      <div class="sidebar-brand">
+        <img src="assets/logo-ut.png" alt="" width="32" height="32"
+             onerror="this.style.display='none'" />
+        <div class="sidebar-brand-text">
+          SITTA <small>Universitas Terbuka</small>
+        </div>
+      </div>
+      <ul class="sidebar-nav">
+        <li><a href="index.html" data-page="index" @click="closeSidebar">
+          <span class="nav-icon" aria-hidden="true">🏠</span>
+          <span>Beranda</span>
+        </a></li>
+        <li><a href="stok.html" data-page="stok" @click="closeSidebar">
+          <span class="nav-icon" aria-hidden="true">📚</span>
+          <span>Stok Bahan Ajar</span>
+        </a></li>
+        <li><a href="tracking.html" data-page="tracking" @click="closeSidebar">
+          <span class="nav-icon" aria-hidden="true">🚚</span>
+          <span>Tracking DO</span>
+        </a></li>
+      </ul>
+    </aside>
+    <div v-if="sidebarOpen" class="sidebar-backdrop" @click="closeSidebar"></div>
+
+    <!-- Topbar -->
+    <header class="topbar">
+      <button type="button" class="hamburger-btn" @click="toggleSidebar"
+              :aria-expanded="sidebarOpen" aria-controls="sidebar"
+              :aria-label="sidebarOpen ? 'Tutup menu' : 'Buka menu'">
+        <span aria-hidden="true">☰</span>
+      </button>
+      <div class="topbar-brand">
+        <img src="assets/logo-ut.png" alt="" width="36" height="36"
+             onerror="this.style.display='none'" />
+        <span>SITTA</span>
+      </div>
+      <div class="topbar-spacer"></div>
+      <div class="topbar-greeting" aria-live="polite">{{ greeting }}</div>
+    </header>
+
+    <!-- Main -->
+    <main class="main-content" id="main-content">
+      <header class="page-header">
+        <div>
+          <h1 class="page-title">Stok Bahan Ajar</h1>
+          <p class="page-subtitle">Kelola data stok — filter, sort, tambah, edit, hapus</p>
+        </div>
+      </header>
+
+      <!-- Toolbar -->
+      <div class="stok-toolbar">
+        <div class="form-group" style="margin: 0; min-width: 200px;">
+          <label class="sr-only" for="stok-search">Cari bahan ajar</label>
+          <input type="search" id="stok-search" class="form-input"
+                 v-model="searchQuery"
+                 placeholder="🔍 Cari kode atau judul..."
+                 autocomplete="off" />
+        </div>
+
+        <select v-model="filterUpbjj" class="form-select" aria-label="Filter UPBJJ">
+          <option value="">Semua UPBJJ</option>
+          <option v-for="upbjj in seedUpbjjList" :key="upbjj" :value="upbjj">{{ upbjj }}</option>
+        </select>
+
+        <select v-model="filterKategori" v-if="filterUpbjj" class="form-select"
+                aria-label="Filter Kategori">
+          <option value="">Semua Kategori</option>
+          <option v-for="k in availableKategori" :key="k" :value="k">{{ k }}</option>
+        </select>
+
+        <label class="checkbox-inline">
+          <input type="checkbox" v-model="filterPerluReorder" />
+          <span>Hanya perlu re-order</span>
+        </label>
+
+        <select v-model="sortBy" class="form-select" aria-label="Urutkan">
+          <option value="">Urutkan...</option>
+          <option value="judul-asc">Judul (A-Z)</option>
+          <option value="qty-asc">Stok (sedikit-banyak)</option>
+          <option value="qty-desc">Stok (banyak-sedikit)</option>
+          <option value="harga-asc">Harga (murah-mahal)</option>
+          <option value="harga-desc">Harga (mahal-murah)</option>
+        </select>
+
+        <button type="button" @click="resetFilters" class="btn btn-secondary btn-sm">
+          ↺ Reset Filter
+        </button>
+
+        <div class="toolbar-spacer"></div>
+
+        <span class="stok-stats">
+          Menampilkan <strong>{{ stokStats.filteredItem }}</strong>
+          dari <strong>{{ stokStats.totalItem }}</strong> item
+          • Total stok: <strong>{{ stokStats.totalUnit }}</strong> unit
+        </span>
+
+        <button type="button" @click="resetData" class="btn btn-secondary btn-sm"
+                title="Kembalikan data ke kondisi awal">↻ Reset Data</button>
+        <button type="button" @click="openAddModal" class="btn btn-primary">
+          + Tambah Stok
+        </button>
+      </div>
+
+      <!-- Empty state -->
+      <div v-if="filteredSortedStok.length === 0" class="empty-state" role="status">
+        <div class="empty-state-icon" aria-hidden="true">📂</div>
+        <h2 class="empty-state-title">Tidak ada bahan ajar yang cocok</h2>
+        <p class="empty-state-message">
+          Filter atau pencarian Anda tidak menghasilkan apa pun.
+        </p>
+        <button type="button" @click="resetFilters" class="btn btn-primary">
+          ↺ Reset Filter
+        </button>
+      </div>
+
+      <!-- Tabel -->
+      <div v-show="filteredSortedStok.length > 0" class="table-wrapper">
+        <div class="table-scroll">
+          <table class="data-table">
+            <caption class="sr-only">Daftar stok bahan ajar SITTA</caption>
+            <thead>
+              <tr>
+                <th scope="col">Kode</th>
+                <th scope="col">Judul</th>
+                <th scope="col">Kategori</th>
+                <th scope="col">UPBJJ</th>
+                <th scope="col">Lokasi Rak</th>
+                <th scope="col" class="text-right">Harga</th>
+                <th scope="col" class="text-right">Qty</th>
+                <th scope="col" class="text-right">Safety</th>
+                <th scope="col">Status</th>
+                <th scope="col">Catatan</th>
+                <th scope="col" aria-label="Aksi">Aksi</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="item in sanitizedStok" :key="item.kode + '-' + item.upbjj"
+                  :class="{ 'row-flash': item.kode === recentlyChangedKode }">
+                <td><code>{{ item.kode }}</code></td>
+                <td><span v-text="item.judul"></span></td>
+                <td>{{ item.kategori }}</td>
+                <td>{{ item.upbjj }}</td>
+                <td>{{ item.lokasiRak }}</td>
+                <td class="text-right">{{ formatRupiah(item.harga) }}</td>
+                <td class="text-right">{{ item.qty }}</td>
+                <td class="text-right">{{ item.safety }}</td>
+                <td>
+                  <span :class="['badge', statusOf(item).kelas]">
+                    <span v-if="statusOf(item).label === 'Aman'" aria-hidden="true">✅</span>
+                    <span v-else-if="statusOf(item).label === 'Menipis'" aria-hidden="true">⚠️</span>
+                    <span v-else aria-hidden="true">⛔</span>
+                    {{ statusOf(item).label }}
+                  </span>
+                </td>
+                <td class="catatan-cell">
+                  <span v-html="item.catatanSafe"></span>
+                </td>
+                <td class="aksi-cell">
+                  <button type="button" @click="openEditModal(item)"
+                          class="btn btn-ghost btn-sm" :aria-label="`Edit ${item.kode}`">
+                    ✏️
+                  </button>
+                  <button type="button" @click="askDelete(item)"
+                          class="btn btn-ghost btn-sm" :aria-label="`Hapus ${item.kode}`">
+                    🗑️
+                  </button>
+                </td>
+              </tr>
+            </tbody>
+            <tfoot>
+              <tr>
+                <td colspan="11" class="text-center text-muted">
+                  <small>Total filtered: {{ stokStats.filteredItem }} item, {{ stokStats.totalUnit }} unit</small>
+                </td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+      </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="app-footer">
+      &copy; 2026 Universitas Terbuka — SITTA v2.0 Vue.js Edition
+    </footer>
+
+    <!-- Modal Tambah/Edit Stok -->
+    <transition name="modal" @after-leave="onModalClosed">
+      <div v-if="modalForm.open" class="modal-backdrop" role="dialog"
+           aria-modal="true" aria-labelledby="modal-form-title"
+           @click.self="closeModalForm">
+        <div class="modal-content">
+          <button type="button" class="modal-close-btn" @click="closeModalForm"
+                  aria-label="Tutup modal">&times;</button>
+          <h2 id="modal-form-title" class="modal-title">
+            {{ modalForm.mode === 'add' ? 'Tambah Stok Baru' : 'Edit Stok' }}
+          </h2>
+
+          <div v-if="staleDataBanner" class="alert alert-warning">
+            ⚠️ Data ini baru saja diubah di tab lain.
+            <button type="button" @click="reloadFormFromStok" class="btn-link">
+              Refresh data
+            </button>
+          </div>
+
+          <form @submit.prevent="submitForm" novalidate>
+            <div class="form-group">
+              <label class="form-label" for="stok-kode">
+                Kode Mata Kuliah <span class="required" aria-label="wajib">*</span>
+              </label>
+              <input type="text" id="stok-kode" class="form-input"
+                     v-model="formStok.kode"
+                     :readonly="modalForm.mode === 'edit'"
+                     :class="{ readonly: modalForm.mode === 'edit' }"
+                     @blur="validateField('kode')"
+                     placeholder="EKMA4116" autocomplete="off"
+                     aria-required="true"
+                     aria-describedby="stok-kode-hint stok-kode-error" />
+              <span id="stok-kode-hint" class="form-hint">
+                Huruf kapital + angka, mis. EKMA4116
+              </span>
+              <span v-if="touched.kode && errors.kode" id="stok-kode-error"
+                    class="form-error" role="alert">{{ errors.kode }}</span>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="stok-judul">
+                Judul <span class="required">*</span>
+              </label>
+              <input type="text" id="stok-judul" class="form-input"
+                     v-model="formStok.judul" @blur="validateField('judul')"
+                     placeholder="Pengantar Manajemen" aria-required="true" />
+              <span v-if="touched.judul && errors.judul" class="form-error" role="alert">
+                {{ errors.judul }}
+              </span>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="stok-kategori">
+                Kategori <span class="required">*</span>
+              </label>
+              <select id="stok-kategori" class="form-select"
+                      v-model="formStok.kategori" @blur="validateField('kategori')"
+                      aria-required="true">
+                <option value="">-- Pilih kategori --</option>
+                <option v-for="k in seedKategoriList" :key="k" :value="k">{{ k }}</option>
+              </select>
+              <span v-if="touched.kategori && errors.kategori" class="form-error" role="alert">
+                {{ errors.kategori }}
+              </span>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label" for="stok-upbjj">
+                  UT-Daerah <span class="required">*</span>
+                </label>
+                <select id="stok-upbjj" class="form-select"
+                        v-model="formStok.upbjj" @blur="validateField('upbjj')"
+                        aria-required="true">
+                  <option value="">-- Pilih --</option>
+                  <option v-for="u in seedUpbjjList" :key="u" :value="u">{{ u }}</option>
+                </select>
+                <span v-if="touched.upbjj && errors.upbjj" class="form-error" role="alert">
+                  {{ errors.upbjj }}
+                </span>
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="stok-lokasiRak">
+                  Lokasi Rak <span class="required">*</span>
+                </label>
+                <input type="text" id="stok-lokasiRak" class="form-input"
+                       v-model="formStok.lokasiRak" @blur="validateField('lokasiRak')"
+                       placeholder="R1-A3" aria-required="true" />
+                <span v-if="touched.lokasiRak && errors.lokasiRak" class="form-error" role="alert">
+                  {{ errors.lokasiRak }}
+                </span>
+              </div>
+            </div>
+
+            <div class="form-row form-row-3">
+              <div class="form-group">
+                <label class="form-label" for="stok-qty">
+                  Qty <span class="required">*</span>
+                </label>
+                <input type="number" id="stok-qty" class="form-input"
+                       v-model="formStok.qty" @blur="validateField('qty')"
+                       min="0" step="1" aria-required="true" />
+                <span v-if="touched.qty && errors.qty" class="form-error" role="alert">
+                  {{ errors.qty }}
+                </span>
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="stok-safety">
+                  Safety <span class="required">*</span>
+                </label>
+                <input type="number" id="stok-safety" class="form-input"
+                       v-model="formStok.safety" @blur="validateField('safety')"
+                       min="0" step="1" aria-required="true" />
+                <span v-if="touched.safety && errors.safety" class="form-error" role="alert">
+                  {{ errors.safety }}
+                </span>
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="stok-harga">
+                  Harga (Rp) <span class="required">*</span>
+                </label>
+                <input type="number" id="stok-harga" class="form-input"
+                       v-model="formStok.harga" @blur="validateField('harga')"
+                       min="0" step="500" aria-required="true" />
+                <span v-if="touched.harga && errors.harga" class="form-error" role="alert">
+                  {{ errors.harga }}
+                </span>
+              </div>
+            </div>
+
+            <!-- Live preview status -->
+            <div v-if="formStokPreview" class="form-preview">
+              Preview status:
+              <span :class="['badge', formStokPreview.kelas]">
+                {{ formStokPreview.ikon }} {{ formStokPreview.label }}
+              </span>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="stok-catatan">
+                Catatan
+                <small class="form-hint-inline">(opsional, format: em/strong/u/b/i)</small>
+              </label>
+              <textarea id="stok-catatan" class="form-input"
+                        v-model="formStok.catatanHTML" rows="2"
+                        placeholder="<em>Edisi 2024</em>"></textarea>
+            </div>
+
+            <div class="modal-actions">
+              <button type="button" @click="closeModalForm" class="btn btn-secondary">
+                Batal
+              </button>
+              <button type="submit" :disabled="!isFormValid" class="btn btn-primary">
+                {{ modalForm.mode === 'add' ? 'Tambah' : 'Simpan' }}
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </transition>
+
+    <!-- Modal Konfirmasi Hapus -->
+    <transition name="modal">
+      <div v-if="modalDelete.open" class="modal-backdrop" role="alertdialog"
+           aria-modal="true" aria-labelledby="modal-delete-title"
+           @click.self="modalDelete.open = false">
+        <div class="modal-content modal-content--small">
+          <h2 id="modal-delete-title" class="modal-title">Konfirmasi Hapus</h2>
+          <p class="modal-message">
+            Apakah Anda yakin ingin menghapus stok
+            <strong>"{{ modalDelete.item.judul }}"</strong>
+            (<code>{{ modalDelete.item.kode }}</code> @ {{ modalDelete.item.upbjj }})?
+          </p>
+
+          <p v-if="isKodeInPaket(modalDelete.item.kode)" class="alert alert-warning">
+            ⚠️ Kode ini ada di paket. Menghapus akan membuat referensi paket invalid
+            untuk UPBJJ ini.
+          </p>
+
+          <div class="modal-actions">
+            <button type="button" @click="modalDelete.open = false"
+                    class="btn btn-secondary">Batal</button>
+            <button type="button" @click="doDelete"
+                    class="btn btn-danger" autofocus>Hapus</button>
+          </div>
+        </div>
+      </div>
+    </transition>
+
+    <!-- Toast -->
+    <transition name="toast">
+      <div v-if="toast.visible" :class="['toast', 'toast-' + toast.type]"
+           role="status" aria-live="polite">
+        <span class="toast-icon" aria-hidden="true">
+          {{ toast.type === 'success' ? '✅' : toast.type === 'error' ? '⛔' : 'ℹ️' }}
+        </span>
+        <span class="toast-message">{{ toast.message }}</span>
+      </div>
+    </transition>
+  </div>
+
+  <!-- Scripts -->
+  <script src="https://unpkg.com/vue@3.5.34/dist/vue.global.prod.js"></script>
+  <script src="https://unpkg.com/dompurify@3.4.2/dist/purify.min.js"></script>
+  <script src="js/dataBahanAjar.js"></script>
+  <script src="js/shared.js"></script>
+  <script src="js/stok-app.js"></script>
+</body>
+</html>
