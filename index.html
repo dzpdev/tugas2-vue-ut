@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="description" content="Dashboard SITTA UT — ringkasan stok bahan ajar dan delivery order aktif (Vue.js)." />
+  <title>Beranda - SITTA UT (Vue.js)</title>
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body data-page="index">
+  <a href="#main-content" class="sr-only">Lewati ke konten utama</a>
+
+  <div id="app" class="app-shell">
+    <!-- Sidebar -->
+    <aside :class="['sidebar', { open: sidebarOpen }]" id="sidebar" aria-label="Navigasi utama">
+      <div class="sidebar-brand">
+        <img src="assets/logo-ut.png" alt="" width="32" height="32"
+             onerror="this.style.display='none'" />
+        <div class="sidebar-brand-text">
+          SITTA <small>Universitas Terbuka</small>
+        </div>
+      </div>
+      <ul class="sidebar-nav">
+        <li><a href="index.html" data-page="index" @click="closeSidebar">
+          <span class="nav-icon" aria-hidden="true">🏠</span>
+          <span>Beranda</span>
+        </a></li>
+        <li><a href="stok.html" data-page="stok" @click="closeSidebar">
+          <span class="nav-icon" aria-hidden="true">📚</span>
+          <span>Stok Bahan Ajar</span>
+        </a></li>
+        <li><a href="tracking.html" data-page="tracking" @click="closeSidebar">
+          <span class="nav-icon" aria-hidden="true">🚚</span>
+          <span>Tracking DO</span>
+        </a></li>
+      </ul>
+    </aside>
+    <div v-if="sidebarOpen" class="sidebar-backdrop" @click="closeSidebar"></div>
+
+    <!-- Topbar -->
+    <header class="topbar">
+      <button type="button" class="hamburger-btn" @click="toggleSidebar"
+              :aria-expanded="sidebarOpen" aria-controls="sidebar"
+              :aria-label="sidebarOpen ? 'Tutup menu' : 'Buka menu'">
+        <span aria-hidden="true">☰</span>
+      </button>
+      <div class="topbar-brand">
+        <img src="assets/logo-ut.png" alt="" width="36" height="36"
+             onerror="this.style.display='none'" />
+        <span>SITTA</span>
+      </div>
+      <div class="topbar-spacer"></div>
+      <div class="topbar-greeting" aria-live="polite">{{ greeting }}, Staf UT</div>
+    </header>
+
+    <!-- Main -->
+    <main class="main-content" id="main-content">
+      <header class="page-header">
+        <div>
+          <h1 class="page-title">Dashboard SITTA</h1>
+          <p class="page-subtitle">
+            Ringkasan stok bahan ajar dan delivery order aktif.
+            <small v-if="lastSync" class="text-muted">
+              · Sinkronisasi terakhir: {{ formatWaktu(lastSync) }}
+            </small>
+          </p>
+        </div>
+      </header>
+
+      <!-- KPI Cards -->
+      <section class="kpi-grid" aria-label="Ringkasan dashboard">
+        <article class="kpi-card">
+          <p class="kpi-label">📦 Total Stok</p>
+          <p class="kpi-value">{{ totalStokFormatted }}</p>
+          <p class="kpi-detail">unit bahan ajar tersedia</p>
+        </article>
+
+        <article class="kpi-card">
+          <p class="kpi-label">📚 Total Bahan Ajar</p>
+          <p class="kpi-value">{{ totalBarang }}</p>
+          <p class="kpi-detail">jenis × UPBJJ terdaftar</p>
+        </article>
+
+        <article :class="['kpi-card', { 'kpi-warning': stokKritis > 0 }]">
+          <p class="kpi-label">⚠️ Stok Kritis</p>
+          <p class="kpi-value">{{ stokKritis }}</p>
+          <p class="kpi-detail">item perlu re-order</p>
+        </article>
+
+        <article class="kpi-card">
+          <p class="kpi-label">🚚 DO Aktif</p>
+          <p class="kpi-value">{{ doAktif }}</p>
+          <p class="kpi-detail">dari total {{ doTotal }} delivery</p>
+        </article>
+      </section>
+
+      <!-- Quick Actions -->
+      <section class="card" aria-labelledby="quick-actions-title">
+        <h2 id="quick-actions-title" class="card-title">Aksi Cepat</h2>
+        <p class="card-subtitle">Pilih salah satu fitur untuk mulai bekerja</p>
+        <div class="quick-actions">
+          <a href="stok.html" class="btn btn-primary btn-lg">
+            <span aria-hidden="true">📚</span> Kelola Stok Bahan Ajar
+          </a>
+          <a href="tracking.html" class="btn btn-secondary btn-lg">
+            <span aria-hidden="true">🚚</span> Tracking DO
+          </a>
+        </div>
+      </section>
+
+      <!-- Status Distribution Bars -->
+      <section class="card" v-if="totalBarang > 0">
+        <h2 class="card-title">Distribusi Status Stok</h2>
+        <p class="card-subtitle">Persentase item per kategori status</p>
+        <div class="status-bars">
+          <div class="status-bar-row">
+            <span class="status-bar-label">✅ Aman</span>
+            <div class="status-bar-track">
+              <div class="status-bar-fill bar-aman"
+                   :style="{ width: pctAman + '%' }"
+                   :aria-label="`${pctAman}% Aman`"></div>
+            </div>
+            <span class="status-bar-value">{{ countAman }} ({{ pctAman }}%)</span>
+          </div>
+          <div class="status-bar-row">
+            <span class="status-bar-label">⚠️ Menipis</span>
+            <div class="status-bar-track">
+              <div class="status-bar-fill bar-menipis"
+                   :style="{ width: pctMenipis + '%' }"></div>
+            </div>
+            <span class="status-bar-value">{{ countMenipis }} ({{ pctMenipis }}%)</span>
+          </div>
+          <div class="status-bar-row">
+            <span class="status-bar-label">⛔ Kosong</span>
+            <div class="status-bar-track">
+              <div class="status-bar-fill bar-kosong"
+                   :style="{ width: pctKosong + '%' }"></div>
+            </div>
+            <span class="status-bar-value">{{ countKosong }} ({{ pctKosong }}%)</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- About -->
+      <section class="card">
+        <h2 class="card-title">Tentang SITTA</h2>
+        <p class="card-subtitle">Sistem Informasi Tiras dan Transaksi Bahan Ajar</p>
+        <p>
+          SITTA adalah aplikasi yang digunakan oleh UT-Daerah untuk mengelola
+          pemesanan dan distribusi bahan ajar Universitas Terbuka. Dari aplikasi
+          ini Anda dapat memantau stok, melacak pengiriman, dan mengelola
+          transaksi bahan ajar untuk mahasiswa di wilayah Anda.
+        </p>
+        <p class="text-muted">
+          <small>v2.0 Vue.js Edition — Dibangun dengan Vue 3.5 (Options API, CDN)</small>
+        </p>
+      </section>
+    </main>
+
+    <!-- Footer -->
+    <footer class="app-footer">
+      &copy; 2026 Universitas Terbuka — SITTA v2.0 Vue.js Edition
+    </footer>
+  </div>
+
+  <!-- Scripts -->
+  <script src="https://unpkg.com/vue@3.5.34/dist/vue.global.prod.js"></script>
+  <script src="js/dataBahanAjar.js"></script>
+  <script src="js/shared.js"></script>
+  <script src="js/index-app.js"></script>
+</body>
+</html>
