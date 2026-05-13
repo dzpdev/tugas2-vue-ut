@@ -1150,3 +1150,293 @@ input, button, select, textarea {
   .kpi-card .kpi-value { font-size: 1.4rem; }
   .data-table thead th { font-size: .7rem; }
 }
+
+/* ============================================================================
+   SITTA Vue.js Edition — Additions for Tugas Praktik 2
+   ============================================================================ */
+
+/* ========== Toolbar Stok ========== */
+.stok-toolbar {
+  display: flex; gap: .5rem; flex-wrap: wrap; align-items: center;
+  padding: 1rem; background: white; border-radius: .5rem;
+  box-shadow: 0 1px 3px rgba(0,0,0,.05); margin-bottom: 1rem;
+}
+.stok-stats { font-size: .85rem; color: #6b7280; }
+.toolbar-spacer { flex: 1; }
+.checkbox-inline {
+  display: flex; align-items: center; gap: .375rem;
+  font-size: .875rem; cursor: pointer;
+  padding: .375rem .5rem; border-radius: .25rem;
+}
+.checkbox-inline:hover { background: #f3f4f6; }
+
+/* ========== Form layout enhancements ========== */
+.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: .75rem; }
+.form-row-3 { grid-template-columns: 1fr 1fr 1fr; gap: .75rem; }
+.form-input.readonly,
+.form-input[readonly] { background: #f9fafb; cursor: not-allowed; color: #6b7280; }
+.form-preview {
+  padding: .625rem; background: #f9fafb; border-radius: .25rem;
+  margin-bottom: .75rem; font-size: .875rem;
+}
+.form-hint-inline { color: #6b7280; font-weight: normal; font-size: .8125rem; }
+.required { color: #ef4444; margin-left: 2px; }
+.form-actions {
+  display: flex; gap: .5rem; justify-content: flex-end;
+  margin-top: 1rem; padding-top: 1rem; border-top: 1px solid #e5e7eb;
+}
+
+/* ========== Status Badges ========== */
+.badge {
+  padding: 3px 10px; border-radius: 12px; font-size: .75rem;
+  font-weight: 600; display: inline-flex; align-items: center; gap: 4px;
+  white-space: nowrap;
+}
+.badge-aman    { background: #d1fae5; color: #065f46; }
+.badge-menipis { background: #fef3c7; color: #92400e; }
+.badge-kosong  { background: #fee2e2; color: #991b1b; }
+
+.badge-baru-dibuat       { background: #dbeafe; color: #1e40af; }
+.badge-dalam-persiapan   { background: #fef3c7; color: #92400e; }
+.badge-dalam-perjalanan  { background: #e9d5ff; color: #6b21a8; }
+.badge-diterima          { background: #d1fae5; color: #065f46; }
+.badge-dibatalkan        { background: #fee2e2; color: #991b1b; }
+
+/* ========== Toast ========== */
+.toast {
+  position: fixed; top: 1rem; right: 1rem; z-index: 9999;
+  padding: .75rem 1rem; border-radius: .5rem;
+  box-shadow: 0 4px 12px rgba(0,0,0,.15);
+  display: flex; align-items: center; gap: .5rem;
+  font-size: .9rem; max-width: 360px;
+  background: white;
+}
+.toast-success { background: #d1fae5; color: #065f46; border-left: 4px solid #10b981; }
+.toast-error   { background: #fee2e2; color: #991b1b; border-left: 4px solid #ef4444; }
+.toast-info    { background: #dbeafe; color: #1e40af; border-left: 4px solid #3b82f6; }
+.toast-icon { font-size: 1.1em; }
+
+.toast-enter-active, .toast-leave-active {
+  transition: opacity 200ms ease-out, transform 200ms ease-out;
+}
+.toast-enter-from, .toast-leave-to {
+  opacity: 0; transform: translateX(20px);
+}
+
+/* ========== Modal Transition ========== */
+.modal-enter-active, .modal-leave-active {
+  transition: opacity 250ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+.modal-enter-active .modal-content,
+.modal-leave-active .modal-content {
+  transition: transform 250ms cubic-bezier(0.4, 0, 0.2, 1),
+              opacity 250ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+.modal-enter-from, .modal-leave-to { opacity: 0; }
+.modal-enter-from .modal-content, .modal-leave-to .modal-content {
+  transform: translateY(20px); opacity: 0;
+}
+
+/* ========== Row Flash ========== */
+@keyframes rowFlash {
+  0%   { background-color: #fef9c3; }
+  20%  { background-color: #fef9c3; }
+  100% { background-color: transparent; }
+}
+.row-flash { animation: rowFlash 1500ms ease-out; }
+
+/* ========== Empty State ========== */
+.empty-state {
+  text-align: center; padding: 3rem 1rem; max-width: 420px;
+  margin: 2rem auto; background: white; border-radius: .5rem;
+  box-shadow: 0 1px 3px rgba(0,0,0,.05);
+}
+.empty-state-icon { font-size: 4rem; margin-bottom: 1rem; line-height: 1; }
+.empty-state-title { font-size: 1.25rem; color: #374151; margin: 0 0 .5rem; font-weight: 600; }
+.empty-state-message { color: #6b7280; margin: 0 0 1.5rem; }
+
+/* ========== Sidebar Active State (pure CSS via data-page) ========== */
+body[data-page="index"] .sidebar-nav a[data-page="index"],
+body[data-page="stok"]  .sidebar-nav a[data-page="stok"],
+body[data-page="tracking"] .sidebar-nav a[data-page="tracking"] {
+  background: #1e3a8a;
+  color: white;
+  font-weight: 500;
+}
+
+/* ========== Sidebar Mobile Off-Canvas ========== */
+.sidebar-backdrop {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 999;
+}
+
+/* ========== Tabel cells ========== */
+.text-right { text-align: right; }
+.text-center { text-align: center; }
+.text-muted { color: #6b7280; }
+.aksi-cell { display: flex; gap: .25rem; }
+.catatan-cell { max-width: 220px; font-size: .85rem; }
+.catatan-cell em { font-style: italic; }
+.catatan-cell strong { font-weight: 600; }
+.catatan-cell u { text-decoration: underline; }
+.clickable-row { cursor: pointer; }
+.clickable-row:hover { background: #f9fafb; }
+
+/* ========== Alert ========== */
+.alert {
+  padding: .625rem .875rem; border-radius: .25rem;
+  margin: .5rem 0; font-size: .875rem;
+}
+.alert-warning { background: #fef3c7; color: #92400e; border-left: 3px solid #f59e0b; }
+.alert-error   { background: #fee2e2; color: #991b1b; border-left: 3px solid #ef4444; }
+
+.btn-link {
+  background: none; border: none; padding: 0; color: #1e40af;
+  text-decoration: underline; cursor: pointer; font: inherit;
+}
+
+/* ========== KPI Card variant + Status bars ========== */
+.kpi-card.kpi-warning { border-left: 4px solid #f59e0b; background: #fffbeb; }
+.kpi-card.kpi-warning .kpi-value { color: #92400e; }
+
+.status-bars { display: flex; flex-direction: column; gap: .5rem; margin-top: 1rem; }
+.status-bar-row {
+  display: grid;
+  grid-template-columns: 110px 1fr 130px;
+  gap: 1rem; align-items: center;
+}
+.status-bar-label { font-size: .85rem; color: #374151; font-weight: 500; }
+.status-bar-track {
+  background: #f3f4f6; border-radius: 4px; height: 18px; overflow: hidden;
+}
+.status-bar-fill {
+  height: 100%; transition: width 500ms ease-in-out; border-radius: 4px;
+}
+.bar-aman    { background: #10b981; }
+.bar-menipis { background: #f59e0b; }
+.bar-kosong  { background: #ef4444; }
+.status-bar-value {
+  font-size: .85rem; color: #6b7280; text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ========== Tracking — Paket Detail ========== */
+.paket-detail {
+  background: #f9fafb; border-radius: .375rem;
+  padding: .75rem 1rem; margin-top: .75rem;
+}
+.paket-detail h4 { margin: 0 0 .5rem; font-size: .9rem; color: #374151; }
+.paket-isi-list { list-style: none; padding: 0; margin: 0; }
+.paket-isi-list li {
+  padding: .375rem 0;
+  display: flex; flex-wrap: wrap; gap: .375rem; align-items: center;
+  font-size: .875rem;
+}
+.paket-isi-list li.item-unavailable { color: #991b1b; }
+.qty-ok { color: #065f46; font-size: .8125rem; }
+.qty-fail { color: #991b1b; font-size: .8125rem; }
+
+/* ========== Tracking — Histori toolbar ========== */
+.histori-toolbar {
+  display: flex; gap: .5rem; align-items: center; margin-bottom: 1rem;
+}
+.histori-toolbar .form-input { flex: 1; }
+
+/* ========== Tracking — Timeline ========== */
+.timeline-row { background: #fafafa; }
+.timeline-wrapper { padding: 1rem; }
+.timeline-wrapper h4 { margin: 0 0 .75rem; font-size: .9rem; color: #374151; }
+.timeline {
+  list-style: none; padding-left: 1rem; margin: 0;
+  border-left: 2px solid #e5e7eb;
+}
+.timeline li {
+  position: relative; padding-left: 1rem; padding-bottom: 1rem;
+}
+.timeline li:last-child { padding-bottom: 0; }
+.timeline li::before {
+  content: '●'; position: absolute; left: -.7rem;
+  color: #1e40af; background: white; padding: 0 2px;
+  font-size: .9rem;
+}
+.timeline-time {
+  font-size: .8125rem; color: #6b7280;
+  font-weight: 500; margin-bottom: .125rem;
+}
+.timeline-icon { display: inline-block; margin-left: 4px; }
+.timeline-text { font-size: .9rem; color: #111827; }
+
+/* ========== Update Status — Suggestion Chip ========== */
+.suggestion-chip {
+  display: flex; align-items: center; gap: .5rem;
+  font-size: .85rem; color: #6b7280;
+  margin-bottom: .75rem; flex-wrap: wrap;
+}
+.chip {
+  background: #eff6ff; color: #1e40af;
+  border: 1px solid #bfdbfe;
+  padding: .25rem .625rem; border-radius: 999px;
+  font-size: .8125rem; cursor: pointer;
+  font-family: inherit;
+}
+.chip:hover { background: #dbeafe; }
+
+/* ========== Form DO ========== */
+.form-do { max-width: 720px; }
+
+/* ========== Mobile Off-Canvas Sidebar ========== */
+@media (max-width: 768px) {
+  .sidebar:not(.open) {
+    transform: translateX(-100%);
+    transition: transform 250ms cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  .sidebar.open {
+    transform: translateX(0);
+    z-index: 1000;
+    box-shadow: 2px 0 8px rgba(0,0,0,0.2);
+  }
+  .stok-toolbar { flex-direction: column; align-items: stretch; }
+  .stok-toolbar .form-group,
+  .stok-toolbar .form-select,
+  .stok-toolbar .btn,
+  .stok-toolbar input { width: 100%; }
+  .stok-toolbar .toolbar-spacer { display: none; }
+  .stok-stats { text-align: center; padding: .25rem 0; }
+
+  .form-row, .form-row-3 { grid-template-columns: 1fr; }
+  .histori-toolbar { flex-direction: column; align-items: stretch; }
+  .form-do { max-width: 100%; }
+
+  .status-bar-row {
+    grid-template-columns: 90px 1fr 90px;
+    gap: .5rem; font-size: .8rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .toast {
+    top: 1rem; left: 1rem; right: 1rem; max-width: none;
+  }
+  .toast-enter-from, .toast-leave-to {
+    transform: translateY(-20px); transform: translateX(0);
+  }
+  .modal-content {
+    width: calc(100% - 1rem); margin: .5rem;
+    max-height: calc(100vh - 1rem); overflow-y: auto;
+  }
+  .empty-state-icon { font-size: 3rem; }
+  .badge { font-size: .7rem; padding: 2px 8px; }
+}
+
+/* ========== Reduced Motion (accessibility) ========== */
+@media (prefers-reduced-motion: reduce) {
+  .modal-enter-active, .modal-leave-active,
+  .modal-enter-active .modal-content, .modal-leave-active .modal-content,
+  .toast-enter-active, .toast-leave-active,
+  .row-flash,
+  .status-bar-fill,
+  .sidebar:not(.open),
+  .sidebar.open {
+    transition: none !important;
+    animation: none !important;
+  }
+}
