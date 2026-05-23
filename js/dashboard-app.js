@@ -26,10 +26,13 @@ Vue.createApp({
 
   mounted() {
     window.addEventListener('storage', this.onStorageChange);
+    // Multi-tab logout sync (factory closure pattern, hindari reference leak)
+    this._teardownAuth = installAuthGuardListener('logout');
   },
 
   beforeUnmount() {
     window.removeEventListener('storage', this.onStorageChange);
+    this._teardownAuth?.();
   },
 
   computed: {

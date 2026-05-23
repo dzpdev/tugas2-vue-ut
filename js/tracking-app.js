@@ -69,6 +69,9 @@ Vue.createApp({
       }
     });
 
+    // Multi-tab logout sync (factory closure pattern, hindari reference leak)
+    this._teardownAuth = installAuthGuardListener('logout');
+
     // Stok read-only listener (tracking-app TIDAK owns stok save — explicit di submitDO)
     window.addEventListener('storage', this.onStokStorageChange);
     document.addEventListener('keydown', this.handleEscapeKey);
@@ -76,6 +79,7 @@ Vue.createApp({
 
   beforeUnmount() {
     if (this._cleanupTracking) this._cleanupTracking();
+    this._teardownAuth?.();
     window.removeEventListener('storage', this.onStokStorageChange);
     document.removeEventListener('keydown', this.handleEscapeKey);
     clearTimeout(this._searchTimer);

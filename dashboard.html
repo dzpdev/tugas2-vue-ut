@@ -4,6 +4,23 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="description" content="Dashboard SITTA UT — ringkasan stok bahan ajar dan delivery order aktif (Vue.js)." />
+
+  <!-- Auth gate (head guard) — sync + visibility-hidden backup -->
+  <style>html { visibility: hidden; }</style>
+  <script>
+    (function () {
+      try {
+        if (!localStorage.getItem('sitta-auth-v2')) {
+          window.location.replace('index.html');
+          return;
+        }
+      } catch (e) {}
+      document.addEventListener('DOMContentLoaded', function () {
+        document.documentElement.style.visibility = '';
+      });
+    })();
+  </script>
+
   <title>Beranda - SITTA UT (Vue.js)</title>
   <link rel="stylesheet" href="css/style.css" />
 </head>

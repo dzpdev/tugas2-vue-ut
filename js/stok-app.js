@@ -70,11 +70,14 @@ Vue.createApp({
         }
       }
     });
+    // Multi-tab logout sync (factory closure pattern, hindari reference leak)
+    this._teardownAuth = installAuthGuardListener('logout');
     document.addEventListener('keydown', this.handleEscapeKey);
   },
 
   beforeUnmount() {
     if (this._cleanup) this._cleanup();
+    this._teardownAuth?.();
     document.removeEventListener('keydown', this.handleEscapeKey);
     clearTimeout(this._searchTimer);
     clearTimeout(this._toastTimer);
