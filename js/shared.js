@@ -209,11 +209,123 @@ const stokStore = createStorageSyncedRef('sitta-stok-v2');
 const trackingStore = createStorageSyncedRef('sitta-tracking-v2');
 
 // ============================================================================
+// === AUTH (mock — coursework only) ===
+// ============================================================================
+// CATATAN PII: DEMO_ACCOUNTS hard-coded dengan plain-text password adalah
+// pilihan EKSPLISIT untuk coursework demo. Mirror Tugas 1's auth.js pattern.
+// Demo hint card di login.html juga tampilkan semua password — fully
+// transparent untuk grading. JANGAN diadopsi di production app.
+//
+// SECURITY CONVENTIONS (lihat plan):
+// 1. Redirect targets HARUS literal — JANGAN baca dari auth/session object
+// 2. v-html HARUS via safeSanitize() — auth token di localStorage readable
+//    by any same-origin script
+// 3. AUTH_KEY literal muncul di 5 tempat (1 const ini + 4 head guard HTML);
+//    kalau berubah, sync semua manual
+// ============================================================================
+
+// MUST match literal in <head> guards of dashboard.html, stok.html,
+// tracking.html, index.html.
+const AUTH_KEY = 'sitta-auth-v2';
+
+const DEMO_ACCOUNTS = [
+  { email: 'admin@ut.ac.id', password: 'admin123', nama: 'Admin SITTA',
+    role: 'Administrator',  upbjj: null,        badge: 'role-admin'    },
+  { email: 'siti@ut.ac.id',  password: 'siti123',  nama: 'Siti Nurhaliza',
+    role: 'Puslaba',        upbjj: null,        badge: 'role-puslaba'  },
+  { email: 'doni@ut.ac.id',  password: 'doni123',  nama: 'Doni Pratama',
+    role: 'Fakultas',       upbjj: null,        badge: 'role-fakultas' },
+  { email: 'rina@ut.ac.id',  password: 'rina123',  nama: 'Rina Wulandari',
+    role: 'UPBJJ Jakarta',  upbjj: 'Jakarta',   badge: 'role-upbjj'    },
+  { email: 'agus@ut.ac.id',  password: 'agus123',  nama: 'Agus Pranoto',
+    role: 'UPBJJ Makassar', upbjj: 'Makassar',  badge: 'role-upbjj'    }
+];
+
+// Whitelist untuk safeRoleBadge — cegah arbitrary CSS class injection
+// kalau ada localStorage spoof. Cosmetic-only impact tanpa guard, tapi
+// preventive defense murah.
+const ALLOWED_ROLE_BADGES = new Set([
+  'role-admin', 'role-puslaba', 'role-fakultas', 'role-upbjj', 'role-default'
+]);
+
+// ---------- Auth state helpers ----------
+
+function getAuth() {
+  return loadFromStorage(AUTH_KEY);  // returns object | null
+}
+
+function setAuth(account) {
+  // Simpan subset (no password!) + loginAt timestamp + badge field
+  const sessionData = {
+    email:   account.email,
+    nama:    account.nama,
+    role:    account.role,
+    upbjj:   account.upbjj,
+    badge:   account.badge,
+    loginAt: new Date().toISOString()
+  };
+  saveToStorage(AUTH_KEY, sessionData);
+  return sessionData;
+}
+
+function clearAuth() {
+  try {
+    localStorage.removeItem(AUTH_KEY);
+  } catch (e) {
+    console.warn('[SITTA] clearAuth failed:', e.name);
+  }
+}
+
+// ---------- Account lookup ----------
+
+function findAccount(email, password) {
+  return DEMO_ACCOUNTS.find(a =>
+    a.email === email && a.password === password
+  ) ?? null;
+}
+
+function emailExists(email) {
+  return DEMO_ACCOUNTS.some(a => a.email === email);
+}
+
+// ---------- Display helpers ----------
+
+function safeRoleBadge(badge) {
+  // Whitelist guard — defend against localStorage spoof
+  return ALLOWED_ROLE_BADGES.has(badge) ? badge : 'role-default';
+}
+
+// ---------- Multi-tab auth sync factory ----------
+
+// direction: 'logout' = protected pages (redirect to login when auth cleared)
+//            'login'  = login page    (redirect to dashboard when auth set)
+// Returns cleanup function — caller MUST call di beforeUnmount()
+function installAuthGuardListener(direction) {
+  // Closure handler — reference identik untuk add/remove symmetry.
+  // PENTING: jangan pakai `this.method` reference (silent leak — Vue
+  // method reference berbeda tiap akses → removeEventListener no-op).
+  const handler = function (e) {
+    if (e.key !== AUTH_KEY) return;
+    if (direction === 'logout' && !e.newValue) {
+      window.location.replace('index.html');
+    } else if (direction === 'login' && e.newValue) {
+      window.location.replace('dashboard.html');
+    }
+  };
+  window.addEventListener('storage', handler);
+  return function cleanup() {
+    window.removeEventListener('storage', handler);
+  };
+}
+
+// ============================================================================
 // Sanity check log — bukti shared loaded + Vue/DOMPurify version
 // ============================================================================
 
 console.log(
   '[SITTA] shared.js loaded.',
   'Vue:', typeof Vue !== 'undefined' ? Vue.version : 'NOT LOADED',
-  '| DOMPurify:', typeof DOMPurify !== 'undefined' ? DOMPurify.version : 'NOT LOADED'
+  '| DOMPurify:', typeof DOMPurify !== 'undefined' ? DOMPurify.version : 'NOT LOADED',
+  '| Accounts:', DEMO_ACCOUNTS.length,
+  '| Auth:', getAuth()?.email ?? 'none'
 );
