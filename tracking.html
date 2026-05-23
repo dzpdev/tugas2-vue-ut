@@ -67,7 +67,17 @@
         <span>SITTA</span>
       </div>
       <div class="topbar-spacer"></div>
-      <div class="topbar-greeting" aria-live="polite">{{ greeting }}</div>
+      <div class="topbar-greeting" aria-live="polite">
+        {{ greeting }}, <strong>{{ currentUser?.nama || 'Tamu' }}</strong>
+      </div>
+      <span v-if="currentUser"
+            :class="['badge', 'role-badge', safeBadge(currentUser.badge)]">
+        {{ currentUser.role }}
+      </span>
+      <button v-if="currentUser" type="button" @click="logout"
+              class="btn btn-ghost btn-sm" title="Logout">
+        <span aria-hidden="true">⎋</span> Logout
+      </button>
     </header>
 
     <!-- Main -->

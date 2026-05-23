@@ -36,6 +36,8 @@ Vue.createApp({
   },
 
   computed: {
+    currentUser() { return getAuth(); },
+
     greeting() {
       const h = new Date().getHours();
       if (h < 11) return 'Selamat pagi';
@@ -66,6 +68,12 @@ Vue.createApp({
 
   methods: {
     formatWaktu,
+    safeBadge(badge) { return safeRoleBadge(badge); },
+
+    logout() {
+      clearAuth();
+      window.location.replace('index.html');
+    },
 
     onStorageChange(e) {
       if (e.key === 'sitta-stok-v2' && e.newValue) {

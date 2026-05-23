@@ -91,6 +91,8 @@ Vue.createApp({
   // ============================================================================
 
   computed: {
+    currentUser() { return getAuth(); },
+
     nextDoNumber() {
       return Domain.generateDoNumber(this.tracking);
     },
@@ -188,9 +190,16 @@ Vue.createApp({
     formatTanggal,
     formatWaktu,
     todayLocal,
+    safeBadge(badge) { return safeRoleBadge(badge); },
     iconForKeterangan(k) { return Domain.iconForKeterangan(k); },
     slugStatus(s) { return Domain.slugStatus(s); },
     availableStatuses(current) { return Domain.nextStatuses(current); },
+
+    // ---- Auth ----
+    logout() {
+      clearAuth();
+      window.location.replace('index.html');
+    },
     suggestionForStatus(status) {
       const doData = this.tracking[this.modalUpdateStatus.nomor];
       return Domain.suggestionFor(status, doData);

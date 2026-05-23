@@ -89,6 +89,8 @@ Vue.createApp({
   // ============================================================================
 
   computed: {
+    currentUser() { return getAuth(); },
+
     // Filter UPBJJ → dependent Kategori options
     availableKategori() {
       if (!this.filterUpbjj) return this.seedKategoriList;
@@ -199,8 +201,15 @@ Vue.createApp({
     formatRupiah,
     formatTanggal,
     safeSanitize,
+    safeBadge(badge) { return safeRoleBadge(badge); },
     statusOf(item) { return Domain.statusOf(item); },
     isKodeInPaket(kode) { return Domain.isKodeInPaket(kode, this.seedPaket); },
+
+    // ---- Auth ----
+    logout() {
+      clearAuth();
+      window.location.replace('index.html');
+    },
 
     // ---- Form blank state ----
     blankFormStok() {
