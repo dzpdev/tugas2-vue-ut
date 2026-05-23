@@ -1440,3 +1440,33 @@ body[data-page="tracking"]  .sidebar-nav a[data-page="tracking"] {
     animation: none !important;
   }
 }
+
+/* ============================================================================
+   Login Page (Tugas 2) — additions
+   ============================================================================ */
+
+/* Demo account chip buttons (di login hint card) */
+.demo-account-chip {
+  display: block; width: 100%; text-align: left;
+  background: white; border: 1px solid #e5e7eb;
+  padding: .375rem .625rem; margin-top: .375rem;
+  border-radius: .25rem; cursor: pointer; font-size: .75rem;
+  font-family: inherit;
+  transition: background-color 150ms, border-color 150ms;
+}
+.demo-account-chip:hover { background: #f3f4f6; border-color: #9ca3af; }
+.demo-account-chip:focus-visible {
+  outline: 2px solid #1e3a8a; outline-offset: 2px;
+}
+.demo-account-chip code { font-family: monospace; }
+.demo-account-chip small { color: #6b7280; margin-left: .25rem; }
+
+/* Touch target ≥44×44 untuk toggle password (WCAG 2.5.5) */
+.input-icon-btn { min-width: 44px; min-height: 44px; }
+
+/* Role badge color variants (per role di topbar) */
+.role-admin    { background: #fee2e2; color: #991b1b; }
+.role-puslaba  { background: #dbeafe; color: #1e40af; }
+.role-fakultas { background: #e9d5ff; color: #6b21a8; }
+.role-upbjj    { background: #d1fae5; color: #065f46; }
+.role-default  { background: #f3f4f6; color: #374151; }

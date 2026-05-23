@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="description" content="Login SITTA UT — Sistem Informasi Tiras dan Transaksi Bahan Ajar Universitas Terbuka (Vue.js)." />
+
+  <!-- ============================================================
+       Auth Gate (head guard) — sync execution + visibility-hidden
+       ============================================================ -->
+  <style>html { visibility: hidden; }</style>
+  <script>
+    (function () {
+      try {
+        // Login page: kalau sudah auth, redirect ke dashboard
+        if (localStorage.getItem('sitta-auth-v2')) {
+          window.location.replace('dashboard.html');
+          return;
+        }
+      } catch (e) {
+        // localStorage blocked (Safari Private) — allow render, app handles
+      }
+      document.addEventListener('DOMContentLoaded', function () {
+        document.documentElement.style.visibility = '';
+      });
+    })();
+  </script>
+
+  <title>Login - SITTA UT (Vue.js)</title>
+  <link rel="stylesheet" href="css/style.css" />
+
+  <!-- Demo CSS internal (mirror Tugas 1) -->
+  <style>
+    .login-card { animation: cardIn 350ms ease-out; }
+    @keyframes cardIn {
+      from { opacity: 0; transform: translateY(12px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+  </style>
+</head>
+<body class="login-page" data-page="login">
+  <a href="#main-content" class="sr-only">Lewati ke konten utama</a>
+
+  <div id="app">
+    <main class="login-main" id="main-content">
+      <section class="login-card" aria-labelledby="login-title">
+        <header class="login-brand">
+          <img src="assets/logo-ut.png" alt="Logo Universitas Terbuka"
+               width="64" height="64"
+               onerror="this.style.display='none'" />
+          <h1 id="login-title">SITTA</h1>
+          <p>Sistem Informasi Tiras dan Transaksi Bahan Ajar</p>
+        </header>
+
+        <form id="login-form" @submit.prevent="submitLogin" novalidate>
+          <div class="form-group">
+            <label class="form-label" for="login-email">Email</label>
+            <input type="email" id="login-email" name="email"
+                   class="form-input"
+                   v-model="formLogin.email"
+                   @blur="validateLoginField('email')"
+                   placeholder="nama@ut.ac.id"
+                   autocomplete="username"
+                   required aria-required="true"
+                   aria-describedby="login-email-error" />
+            <span v-if="formLoginTouched.email && formLoginErrors.email"
+                  id="login-email-error" class="form-error" role="alert">
+              {{ formLoginErrors.email }}
+            </span>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="login-password">Password</label>
+            <div class="input-wrapper">
+              <input :type="formLogin.showPassword ? 'text' : 'password'"
+                     id="login-password" name="password"
+                     class="form-input"
+                     v-model="formLogin.password"
+                     @blur="validateLoginField('password')"
+                     placeholder="Minimal 6 karakter"
+                     autocomplete="current-password"
+                     required aria-required="true"
+                     aria-describedby="login-password-error" />
+              <button type="button" class="input-icon-btn"
+                      :aria-pressed="formLogin.showPassword.toString()"
+                      :aria-label="formLogin.showPassword ? 'Sembunyikan password' : 'Tampilkan password'"
+                      @click="togglePassword">
+                <span aria-hidden="true">{{ formLogin.showPassword ? '🙈' : '👁' }}</span>
+              </button>
+            </div>
+            <span v-if="formLoginTouched.password && formLoginErrors.password"
+                  id="login-password-error" class="form-error" role="alert">
+              {{ formLoginErrors.password }}
+            </span>
+          </div>
+
+          <div v-if="loginError" class="alert alert-error" role="alert">
+            {{ loginError }}
+          </div>
+
+          <button type="submit"
+                  :disabled="isSubmittingLogin"
+                  :aria-busy="isSubmittingLogin"
+                  class="btn btn-primary btn-block"
+                  style="margin-top: .25rem;">
+            {{ isSubmittingLogin ? 'Memproses...' : 'Login' }}
+          </button>
+        </form>
+
+        <div class="login-links">
+          <button type="button" @click="openLupa">Lupa Password?</button>
+          <button type="button" @click="openDaftar">Belum punya akun? Daftar di sini</button>
+        </div>
+
+        <aside class="demo-hint" aria-label="Akun demo untuk pengujian">
+          <strong>Akun Demo (klik untuk auto-fill):</strong>
+          <button v-for="acc in seedAccounts" :key="acc.email"
+                  type="button" class="demo-account-chip"
+                  @click="useDemoAccount(acc)">
+            <code>{{ acc.email }}</code> / <code>{{ acc.password }}</code>
+            <small>({{ acc.role }})</small>
+          </button>
+        </aside>
+      </section>
+    </main>
+
+    <footer class="login-footer">
+      &copy; 2026 Universitas Terbuka — SITTA v2.0 Vue.js Edition
+    </footer>
+
+    <!-- ============== Modal: Lupa Password ============== -->
+    <transition name="modal" @after-leave="onLupaClosed">
+      <div v-if="modalLupa.open" class="modal-backdrop" role="dialog"
+           aria-modal="true" aria-labelledby="modal-lupa-title"
+           @click.self="closeLupa">
+        <div class="modal-content modal-content--small">
+          <button type="button" class="modal-close-btn" @click="closeLupa"
+                  aria-label="Tutup modal">&times;</button>
+          <h2 id="modal-lupa-title" class="modal-title">Lupa Password</h2>
+          <p class="modal-message">
+            Masukkan email terdaftar Anda. Kami akan mengirim tautan reset
+            password ke email tersebut.
+          </p>
+
+          <form @submit.prevent="submitLupa" novalidate>
+            <div class="form-group">
+              <label class="form-label" for="lupa-email">Email</label>
+              <input ref="lupaEmail"
+                     type="email" id="lupa-email"
+                     class="form-input"
+                     v-model="modalLupa.email"
+                     @blur="validateLupaEmail"
+                     placeholder="nama@ut.ac.id"
+                     autocomplete="username"
+                     required aria-required="true"
+                     aria-describedby="lupa-email-error" />
+              <span v-if="modalLupa.touched && modalLupa.error"
+                    id="lupa-email-error" class="form-error" role="alert">
+                {{ modalLupa.error }}
+              </span>
+            </div>
+
+            <div class="modal-actions">
+              <button type="button" @click="closeLupa" class="btn btn-secondary">
+                Batal
+              </button>
+              <button type="submit"
+                      :disabled="modalLupa.isSubmitting"
+                      :aria-busy="modalLupa.isSubmitting"
+                      class="btn btn-primary">
+                {{ modalLupa.isSubmitting ? 'Memproses...' : 'Kirim Tautan Reset' }}
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </transition>
+
+    <!-- ============== Modal: Daftar ============== -->
+    <transition name="modal" @after-leave="onDaftarClosed">
+      <div v-if="modalDaftar.open" class="modal-backdrop" role="dialog"
+           aria-modal="true" aria-labelledby="modal-daftar-title"
+           @click.self="closeDaftar">
+        <div class="modal-content">
+          <button type="button" class="modal-close-btn" @click="closeDaftar"
+                  aria-label="Tutup modal">&times;</button>
+          <h2 id="modal-daftar-title" class="modal-title">Daftar Akun Baru</h2>
+          <p class="modal-message">
+            Lengkapi form di bawah untuk mendaftar sebagai Staf UT-Daerah.
+          </p>
+
+          <form @submit.prevent="submitDaftar" novalidate>
+            <div class="form-group">
+              <label class="form-label" for="daftar-nama">Nama Lengkap</label>
+              <input ref="daftarNama"
+                     type="text" id="daftar-nama"
+                     class="form-input"
+                     v-model="modalDaftar.nama"
+                     @blur="validateDaftarField('nama')"
+                     autocomplete="name"
+                     required aria-required="true" />
+              <span v-if="modalDaftar.touched.nama && modalDaftar.errors.nama"
+                    class="form-error" role="alert">
+                {{ modalDaftar.errors.nama }}
+              </span>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="daftar-email">Email</label>
+              <input type="email" id="daftar-email"
+                     class="form-input"
+                     v-model="modalDaftar.email"
+                     @blur="validateDaftarField('email')"
+                     placeholder="nama@ut.ac.id"
+                     autocomplete="username"
+                     required aria-required="true"
+                     aria-describedby="daftar-email-hint" />
+              <span id="daftar-email-hint" class="form-hint">
+                Gunakan email @ut.ac.id atau email pribadi
+              </span>
+              <span v-if="modalDaftar.touched.email && modalDaftar.errors.email"
+                    class="form-error" role="alert">
+                {{ modalDaftar.errors.email }}
+              </span>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="daftar-password">Password</label>
+              <div class="input-wrapper">
+                <input :type="modalDaftar.showPassword ? 'text' : 'password'"
+                       id="daftar-password"
+                       class="form-input"
+                       v-model="modalDaftar.password"
+                       @blur="validateDaftarField('password')"
+                       autocomplete="new-password"
+                       required aria-required="true" />
+                <button type="button" class="input-icon-btn"
+                        :aria-pressed="modalDaftar.showPassword.toString()"
+                        :aria-label="modalDaftar.showPassword ? 'Sembunyikan password' : 'Tampilkan password'"
+                        @click="modalDaftar.showPassword = !modalDaftar.showPassword">
+                  <span aria-hidden="true">{{ modalDaftar.showPassword ? '🙈' : '👁' }}</span>
+                </button>
+              </div>
+              <span v-if="modalDaftar.touched.password && modalDaftar.errors.password"
+                    class="form-error" role="alert">
+                {{ modalDaftar.errors.password }}
+              </span>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="daftar-konfirmasi">
+                Konfirmasi Password
+              </label>
+              <input type="password" id="daftar-konfirmasi"
+                     class="form-input"
+                     v-model="modalDaftar.konfirmasi"
+                     @blur="validateDaftarField('konfirmasi')"
+                     autocomplete="new-password"
+                     required aria-required="true" />
+              <span v-if="modalDaftar.touched.konfirmasi && modalDaftar.errors.konfirmasi"
+                    class="form-error" role="alert">
+                {{ modalDaftar.errors.konfirmasi }}
+              </span>
+            </div>
+
+            <div class="modal-actions">
+              <button type="button" @click="closeDaftar" class="btn btn-secondary">
+                Batal
+              </button>
+              <button type="submit"
+                      :disabled="modalDaftar.isSubmitting"
+                      :aria-busy="modalDaftar.isSubmitting"
+                      class="btn btn-primary">
+                {{ modalDaftar.isSubmitting ? 'Memproses...' : 'Daftar' }}
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </transition>
+
+    <!-- Toast -->
+    <transition name="toast">
+      <div v-if="toast.visible" :class="['toast', 'toast-' + toast.type]"
+           role="status" aria-live="polite">
+        <span class="toast-icon" aria-hidden="true">
+          {{ toast.type === 'success' ? '✅' : toast.type === 'error' ? '⛔' : 'ℹ️' }}
+        </span>
+        <span class="toast-message">{{ toast.message }}</span>
+      </div>
+    </transition>
+  </div>
+
+  <!-- Scripts -->
+  <script src="https://unpkg.com/vue@3.5.34/dist/vue.global.prod.js"></script>
+  <script src="js/dataBahanAjar.js"></script>
+  <script src="js/shared.js"></script>
+  <script src="js/login-app.js"></script>
+</body>
+</html>
