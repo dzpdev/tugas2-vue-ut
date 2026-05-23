@@ -36,6 +36,9 @@ Vue.createApp({
       searchDoQueryDebounced: '',
       expandedDo: null,
 
+      // ---- Modal Buat DO Baru ----
+      modalDO: { open: false },
+
       // ---- Modal Update Status ----
       modalUpdateStatus: {
         open: false, nomor: null,
@@ -323,7 +326,7 @@ Vue.createApp({
         }
       };
       this.showToast(`DO ${nomor} berhasil dibuat`, 'success');
-      this.resetFormDO();
+      this.closeDOModal();  // close modal — form reset di onDOModalClosed (after-leave)
     },
 
     resetFormDO() {
@@ -336,6 +339,25 @@ Vue.createApp({
       };
       this.formDOerrors = {};
       this.formDOtouched = {};
+    },
+
+    // ---- Modal Buat DO Baru ----
+    openDOModal() {
+      this.modalDO.open = true;
+      this.$nextTick(() => {
+        this.$refs.doNimInput?.focus();
+      });
+    },
+
+    closeDOModal() {
+      this.modalDO.open = false;
+      // Form reset di onDOModalClosed (after-leave) untuk hindari flash
+    },
+
+    onDOModalClosed() {
+      // Re-open guard: cegah open→close→open cepat reset state mid-second-open
+      if (this.modalDO.open) return;
+      this.resetFormDO();
     },
 
     // ---- Update Status ----
@@ -422,7 +444,8 @@ Vue.createApp({
     // ---- Keyboard shortcuts ----
     handleEscapeKey(e) {
       if (e.key === 'Escape') {
-        if (this.modalUpdateStatus.open) this.modalUpdateStatus.open = false;
+        if (this.modalDO.open) this.closeDOModal();
+        else if (this.modalUpdateStatus.open) this.modalUpdateStatus.open = false;
         else if (this.sidebarOpen) this.closeSidebar();
       }
     }

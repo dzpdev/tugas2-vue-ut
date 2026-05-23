@@ -1470,3 +1470,30 @@ body[data-page="tracking"]  .sidebar-nav a[data-page="tracking"] {
 .role-fakultas { background: #e9d5ff; color: #6b21a8; }
 .role-upbjj    { background: #d1fae5; color: #065f46; }
 .role-default  { background: #f3f4f6; color: #374151; }
+
+/* ============================================================================
+   Modal backdrop — Vue.js Edition (kompatibel <transition name="modal">)
+   ============================================================================ */
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(15, 23, 42, .55);
+  z-index: 1000;
+  padding: 1rem;
+}
+
+/* Tracking — action row (header + button alignment) */
+.do-action-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+.do-action-row .btn-lg { flex-shrink: 0; }
+@media (max-width: 480px) {
+  .do-action-row .btn-lg { width: 100%; }
+}

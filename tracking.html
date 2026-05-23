@@ -90,152 +90,17 @@
       </header>
 
       <!-- Form Input DO Baru -->
-      <section class="card" aria-labelledby="form-do-title">
-        <h2 id="form-do-title" class="card-title">Buat DO Baru</h2>
-        <p class="card-subtitle">Submit DO akan otomatis mengurangi qty stok di UPBJJ asal yang dipilih</p>
-
-        <form @submit.prevent="submitDO" novalidate class="form-do">
-          <!-- Nomor DO (read-only auto-generated) -->
-          <div class="form-group">
-            <label class="form-label" for="do-nomor">Nomor DO (auto-generated)</label>
-            <input type="text" id="do-nomor" class="form-input readonly"
-                   :value="nextDoNumber" readonly aria-readonly="true" />
-            <span class="form-hint">Format: DO{tahun}-{seq 3-digit}, reset per tahun</span>
+      <!-- Action: Buat DO Baru → buka modal -->
+      <section class="card" aria-labelledby="do-action-title">
+        <div class="do-action-row">
+          <div>
+            <h2 id="do-action-title" class="card-title">Buat DO Baru</h2>
+            <p class="card-subtitle">Submit DO akan otomatis mengurangi qty stok di UPBJJ asal yang dipilih</p>
           </div>
-
-          <div class="form-row">
-            <div class="form-group">
-              <label class="form-label" for="do-nim">
-                NIM <span class="required">*</span>
-              </label>
-              <input type="text" id="do-nim" class="form-input"
-                     v-model="formDO.nim" @blur="validateFieldDO('nim')"
-                     placeholder="041234567" maxlength="9"
-                     aria-required="true" autocomplete="off" />
-              <span v-if="formDOtouched.nim && formDOerrors.nim" class="form-error" role="alert">
-                {{ formDOerrors.nim }}
-              </span>
-            </div>
-            <div class="form-group">
-              <label class="form-label" for="do-nama">
-                Nama Lengkap <span class="required">*</span>
-              </label>
-              <input type="text" id="do-nama" class="form-input"
-                     v-model="formDO.nama" @blur="validateFieldDO('nama')"
-                     placeholder="Nama mahasiswa" aria-required="true" />
-              <span v-if="formDOtouched.nama && formDOerrors.nama" class="form-error" role="alert">
-                {{ formDOerrors.nama }}
-              </span>
-            </div>
-          </div>
-
-          <div class="form-row">
-            <div class="form-group">
-              <label class="form-label" for="do-ekspedisi">
-                Ekspedisi <span class="required">*</span>
-              </label>
-              <select id="do-ekspedisi" class="form-select"
-                      v-model="formDO.ekspedisi" @blur="validateFieldDO('ekspedisi')"
-                      aria-required="true">
-                <option value="">-- Pilih ekspedisi --</option>
-                <option v-for="e in seedPengirimanList" :key="e.kode" :value="e.kode">
-                  {{ e.kode }} — {{ e.nama }}
-                </option>
-              </select>
-              <span v-if="formDOtouched.ekspedisi && formDOerrors.ekspedisi" class="form-error" role="alert">
-                {{ formDOerrors.ekspedisi }}
-              </span>
-            </div>
-            <div class="form-group">
-              <label class="form-label" for="do-upbjjAsal">
-                UPBJJ Asal <span class="required">*</span>
-              </label>
-              <select id="do-upbjjAsal" class="form-select"
-                      v-model="formDO.upbjjAsal" @blur="validateFieldDO('upbjjAsal')"
-                      aria-required="true">
-                <option value="">-- Pilih UPBJJ asal --</option>
-                <option v-for="u in seedUpbjjList" :key="u" :value="u">{{ u }}</option>
-              </select>
-              <span v-if="formDOtouched.upbjjAsal && formDOerrors.upbjjAsal" class="form-error" role="alert">
-                {{ formDOerrors.upbjjAsal }}
-              </span>
-            </div>
-          </div>
-
-          <div class="form-group">
-            <label class="form-label" for="do-paket">
-              Paket Bahan Ajar <span class="required">*</span>
-            </label>
-            <select id="do-paket" class="form-select"
-                    v-model="formDO.kodePaket" @blur="validateFieldDO('kodePaket')"
-                    aria-required="true">
-              <option value="">-- Pilih paket --</option>
-              <option v-for="p in seedPaket" :key="p.kode" :value="p.kode">
-                {{ p.kode }} — {{ p.nama }}
-              </option>
-            </select>
-            <span v-if="formDOtouched.kodePaket && formDOerrors.kodePaket" class="form-error" role="alert">
-              {{ formDOerrors.kodePaket }}
-            </span>
-
-            <!-- Detail isi paket (muncul setelah pilih paket + UPBJJ asal) -->
-            <div v-if="selectedPaket && formDO.upbjjAsal" class="paket-detail">
-              <h4>Isi Paket "{{ selectedPaket.nama }}":</h4>
-              <ul class="paket-isi-list">
-                <li v-for="d in selectedPaketDetail" :key="d.kode"
-                    :class="{ 'item-unavailable': !d.cukup }">
-                  <code>{{ d.kode }}</code> — {{ d.judul }}
-                  <span v-if="d.cukup" class="qty-ok">
-                    ✅ {{ d.qtyTersedia }} tersedia di {{ formDO.upbjjAsal }}
-                  </span>
-                  <span v-else class="qty-fail">
-                    ⛔ Tidak tersedia di {{ formDO.upbjjAsal }}
-                    <small v-if="findStokDiUpbjjLain(d.kode)" class="text-muted">
-                      (tersedia di: {{ findStokDiUpbjjLain(d.kode) }})
-                    </small>
-                  </span>
-                </li>
-              </ul>
-              <div v-if="stokTidakTersedia.length > 0" class="alert alert-error">
-                ⚠️ {{ stokTidakTersedia.length }} item tidak tersedia di UPBJJ {{ formDO.upbjjAsal }}.
-                Pilih UPBJJ asal lain atau ubah paket.
-              </div>
-            </div>
-            <div v-else-if="selectedPaket" class="paket-detail">
-              <p class="text-muted"><small>💡 Pilih UPBJJ asal untuk melihat ketersediaan stok.</small></p>
-            </div>
-          </div>
-
-          <div class="form-row">
-            <div class="form-group">
-              <label class="form-label" for="do-tanggal">
-                Tanggal Kirim <span class="required">*</span>
-              </label>
-              <input type="date" id="do-tanggal" class="form-input"
-                     v-model="formDO.tanggalKirim" :min="todayLocal()"
-                     @blur="validateFieldDO('tanggalKirim')"
-                     aria-required="true" />
-              <span v-if="formDOtouched.tanggalKirim && formDOerrors.tanggalKirim" class="form-error" role="alert">
-                {{ formDOerrors.tanggalKirim }}
-              </span>
-            </div>
-            <div class="form-group">
-              <label class="form-label" for="do-total">Total Harga (auto)</label>
-              <input type="text" id="do-total" class="form-input readonly"
-                     :value="formatRupiah(totalDO)" readonly aria-readonly="true" />
-              <span class="form-hint">Auto-fill dari paket terpilih</span>
-            </div>
-          </div>
-
-          <div class="form-actions">
-            <button type="button" @click="resetFormDO" class="btn btn-secondary">
-              Reset Form
-            </button>
-            <button type="submit" :disabled="!canSubmitDO" class="btn btn-primary">
-              📦 Buat DO
-            </button>
-          </div>
-        </form>
+          <button type="button" @click="openDOModal" class="btn btn-primary btn-lg">
+            📦 Buat DO Baru
+          </button>
+        </div>
       </section>
 
       <!-- Histori DO -->
@@ -327,6 +192,164 @@
     <footer class="app-footer">
       &copy; 2026 Universitas Terbuka — SITTA v2.0 Vue.js Edition
     </footer>
+
+    <!-- Modal Buat DO Baru -->
+    <transition name="modal" @after-leave="onDOModalClosed">
+      <div v-if="modalDO.open" class="modal-backdrop" role="dialog"
+           aria-modal="true" aria-labelledby="modal-do-title"
+           @click.self="closeDOModal">
+        <div class="modal-content">
+          <button type="button" class="modal-close-btn" @click="closeDOModal"
+                  aria-label="Tutup modal">&times;</button>
+          <h2 id="modal-do-title" class="modal-title">Buat DO Baru</h2>
+          <p class="modal-message">
+            Submit DO akan otomatis mengurangi qty stok di UPBJJ asal yang dipilih.
+          </p>
+
+          <form @submit.prevent="submitDO" novalidate class="form-do">
+            <div class="form-group">
+              <label class="form-label" for="do-nomor">Nomor DO (auto-generated)</label>
+              <input type="text" id="do-nomor" class="form-input readonly"
+                     :value="nextDoNumber" readonly aria-readonly="true" />
+              <span class="form-hint">Format: DO{tahun}-{seq 3-digit}, reset per tahun</span>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label" for="do-nim">
+                  NIM <span class="required">*</span>
+                </label>
+                <input ref="doNimInput"
+                       type="text" id="do-nim" class="form-input"
+                       v-model="formDO.nim" @blur="validateFieldDO('nim')"
+                       placeholder="041234567" maxlength="9"
+                       aria-required="true" autocomplete="off" />
+                <span v-if="formDOtouched.nim && formDOerrors.nim" class="form-error" role="alert">
+                  {{ formDOerrors.nim }}
+                </span>
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="do-nama">
+                  Nama Lengkap <span class="required">*</span>
+                </label>
+                <input type="text" id="do-nama" class="form-input"
+                       v-model="formDO.nama" @blur="validateFieldDO('nama')"
+                       placeholder="Nama mahasiswa" aria-required="true" />
+                <span v-if="formDOtouched.nama && formDOerrors.nama" class="form-error" role="alert">
+                  {{ formDOerrors.nama }}
+                </span>
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label" for="do-ekspedisi">
+                  Ekspedisi <span class="required">*</span>
+                </label>
+                <select id="do-ekspedisi" class="form-select"
+                        v-model="formDO.ekspedisi" @blur="validateFieldDO('ekspedisi')"
+                        aria-required="true">
+                  <option value="">-- Pilih ekspedisi --</option>
+                  <option v-for="e in seedPengirimanList" :key="e.kode" :value="e.kode">
+                    {{ e.kode }} — {{ e.nama }}
+                  </option>
+                </select>
+                <span v-if="formDOtouched.ekspedisi && formDOerrors.ekspedisi" class="form-error" role="alert">
+                  {{ formDOerrors.ekspedisi }}
+                </span>
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="do-upbjjAsal">
+                  UPBJJ Asal <span class="required">*</span>
+                </label>
+                <select id="do-upbjjAsal" class="form-select"
+                        v-model="formDO.upbjjAsal" @blur="validateFieldDO('upbjjAsal')"
+                        aria-required="true">
+                  <option value="">-- Pilih UPBJJ asal --</option>
+                  <option v-for="u in seedUpbjjList" :key="u" :value="u">{{ u }}</option>
+                </select>
+                <span v-if="formDOtouched.upbjjAsal && formDOerrors.upbjjAsal" class="form-error" role="alert">
+                  {{ formDOerrors.upbjjAsal }}
+                </span>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="do-paket">
+                Paket Bahan Ajar <span class="required">*</span>
+              </label>
+              <select id="do-paket" class="form-select"
+                      v-model="formDO.kodePaket" @blur="validateFieldDO('kodePaket')"
+                      aria-required="true">
+                <option value="">-- Pilih paket --</option>
+                <option v-for="p in seedPaket" :key="p.kode" :value="p.kode">
+                  {{ p.kode }} — {{ p.nama }}
+                </option>
+              </select>
+              <span v-if="formDOtouched.kodePaket && formDOerrors.kodePaket" class="form-error" role="alert">
+                {{ formDOerrors.kodePaket }}
+              </span>
+
+              <div v-if="selectedPaket && formDO.upbjjAsal" class="paket-detail">
+                <h4>Isi Paket "{{ selectedPaket.nama }}":</h4>
+                <ul class="paket-isi-list">
+                  <li v-for="d in selectedPaketDetail" :key="d.kode"
+                      :class="{ 'item-unavailable': !d.cukup }">
+                    <code>{{ d.kode }}</code> — {{ d.judul }}
+                    <span v-if="d.cukup" class="qty-ok">
+                      ✅ {{ d.qtyTersedia }} tersedia di {{ formDO.upbjjAsal }}
+                    </span>
+                    <span v-else class="qty-fail">
+                      ⛔ Tidak tersedia di {{ formDO.upbjjAsal }}
+                      <small v-if="findStokDiUpbjjLain(d.kode)" class="text-muted">
+                        (tersedia di: {{ findStokDiUpbjjLain(d.kode) }})
+                      </small>
+                    </span>
+                  </li>
+                </ul>
+                <div v-if="stokTidakTersedia.length > 0" class="alert alert-error">
+                  ⚠️ {{ stokTidakTersedia.length }} item tidak tersedia di UPBJJ {{ formDO.upbjjAsal }}.
+                  Pilih UPBJJ asal lain atau ubah paket.
+                </div>
+              </div>
+              <div v-else-if="selectedPaket" class="paket-detail">
+                <p class="text-muted"><small>💡 Pilih UPBJJ asal untuk melihat ketersediaan stok.</small></p>
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label" for="do-tanggal">
+                  Tanggal Kirim <span class="required">*</span>
+                </label>
+                <input type="date" id="do-tanggal" class="form-input"
+                       v-model="formDO.tanggalKirim" :min="todayLocal()"
+                       @blur="validateFieldDO('tanggalKirim')"
+                       aria-required="true" />
+                <span v-if="formDOtouched.tanggalKirim && formDOerrors.tanggalKirim" class="form-error" role="alert">
+                  {{ formDOerrors.tanggalKirim }}
+                </span>
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="do-total">Total Harga (auto)</label>
+                <input type="text" id="do-total" class="form-input readonly"
+                       :value="formatRupiah(totalDO)" readonly aria-readonly="true" />
+                <span class="form-hint">Auto-fill dari paket terpilih</span>
+              </div>
+            </div>
+
+            <div class="modal-actions">
+              <button type="button" @click="closeDOModal" class="btn btn-secondary">
+                Batal
+              </button>
+              <button type="submit" :disabled="!canSubmitDO" class="btn btn-primary">
+                📦 Buat DO
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </transition>
 
     <!-- Modal Update Status -->
     <transition name="modal">
