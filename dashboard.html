@@ -7,7 +7,7 @@
   <title>Beranda - SITTA UT (Vue.js)</title>
   <link rel="stylesheet" href="css/style.css" />
 </head>
-<body data-page="index">
+<body data-page="dashboard">
   <a href="#main-content" class="sr-only">Lewati ke konten utama</a>
 
   <div id="app" class="app-shell">
@@ -21,7 +21,7 @@
         </div>
       </div>
       <ul class="sidebar-nav">
-        <li><a href="index.html" data-page="index" @click="closeSidebar">
+        <li><a href="dashboard.html" data-page="dashboard" @click="closeSidebar">
           <span class="nav-icon" aria-hidden="true">🏠</span>
           <span>Beranda</span>
         </a></li>
@@ -167,6 +167,6 @@
   <script src="https://unpkg.com/vue@3.5.34/dist/vue.global.prod.js"></script>
   <script src="js/dataBahanAjar.js"></script>
   <script src="js/shared.js"></script>
-  <script src="js/index-app.js"></script>
+  <script src="js/dashboard-app.js"></script>
 </body>
 </html>

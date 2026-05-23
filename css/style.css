@@ -1256,9 +1256,9 @@ input, button, select, textarea {
 .empty-state-message { color: #6b7280; margin: 0 0 1.5rem; }
 
 /* ========== Sidebar Active State (pure CSS via data-page) ========== */
-body[data-page="index"] .sidebar-nav a[data-page="index"],
-body[data-page="stok"]  .sidebar-nav a[data-page="stok"],
-body[data-page="tracking"] .sidebar-nav a[data-page="tracking"] {
+body[data-page="dashboard"] .sidebar-nav a[data-page="dashboard"],
+body[data-page="stok"]      .sidebar-nav a[data-page="stok"],
+body[data-page="tracking"]  .sidebar-nav a[data-page="tracking"] {
   background: #1e3a8a;
   color: white;
   font-weight: 500;
