@@ -257,6 +257,6 @@ Sebelum demo/recording, jalankan flow ini untuk verify semua fitur:
 ---
 
 🤖 _Aplikasi ini dibuat dengan bantuan AI pair programming (Claude Code) untuk
-exploration, planning (7500+ baris docs di `docs/plans/`), dan refactoring.
+exploration, planning, dan refactoring.
 Implementasi final, testing, dan video penjelasan adalah tanggung jawab penuh
 mahasiswa._
