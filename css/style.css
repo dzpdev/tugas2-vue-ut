@@ -1497,3 +1497,6 @@ body[data-page="tracking"]  .sidebar-nav a[data-page="tracking"] {
 @media (max-width: 480px) {
   .do-action-row .btn-lg { width: 100%; }
 }
+
+/* Spacing antar card di main content (mis. di tracking.html: card "Buat DO" + card "Histori") */
+.main-content .card + .card { margin-top: 1.5rem; }
