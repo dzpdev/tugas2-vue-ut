@@ -238,7 +238,7 @@ const DEMO_ACCOUNTS = [
   { email: 'rina@ut.ac.id',  password: 'rina123',  nama: 'Rina Wulandari',
     role: 'UPBJJ Jakarta',  upbjj: 'Jakarta',   badge: 'role-upbjj'    },
   { email: 'agus@ut.ac.id',  password: 'agus123',  nama: 'Agus Pranoto',
-    role: 'UPBJJ Makassar', upbjj: 'Makassar',  badge: 'role-upbjj'    }
+    role: 'UPBJJ Yogyakarta', upbjj: 'Yogyakarta', badge: 'role-upbjj'   }
 ];
 
 // Whitelist untuk safeRoleBadge — cegah arbitrary CSS class injection

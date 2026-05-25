@@ -740,9 +740,15 @@ input, button, select, textarea {
 /* ---- Login page ---- */
 .login-page {
   min-height: 100vh;
+  margin: 0;
+  background: linear-gradient(135deg, var(--color-secondary) 0%, var(--color-secondary-dark) 100%);
+}
+/* Vue mount target #app harus propagate flex chain — kalau tidak, footer
+   tidak stick ke bottom dan main tidak center vertikal saat konten pendek. */
+.login-page #app {
+  min-height: 100vh;
   display: flex;
   flex-direction: column;
-  background: linear-gradient(135deg, var(--color-secondary) 0%, var(--color-secondary-dark) 100%);
 }
 .login-main {
   flex: 1;
@@ -750,6 +756,9 @@ input, button, select, textarea {
   align-items: center;
   justify-content: center;
   padding: 2rem 1rem;
+}
+.login-footer {
+  margin-top: auto;  /* stick ke bottom kalau konten pendek */
 }
 .login-card {
   background: var(--color-bg);

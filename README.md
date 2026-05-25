@@ -81,7 +81,7 @@ Klik chip akun di login page untuk auto-fill credentials:
 | `siti@ut.ac.id` | `siti123` | Puslaba | — |
 | `doni@ut.ac.id` | `doni123` | Fakultas | — |
 | `rina@ut.ac.id` | `rina123` | UPBJJ Jakarta | Jakarta |
-| `agus@ut.ac.id` | `agus123` | UPBJJ Makassar | Makassar |
+| `agus@ut.ac.id` | `agus123` | UPBJJ Yogyakarta | Yogyakarta |
 
 > Role di-display di topbar dengan badge berwarna, TIDAK enforce access
 > restriction (semua role bisa akses semua fitur — mirror Tugas 1).
